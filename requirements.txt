@@ -1,0 +1,6 @@
+groq>=0.11.0
+ollama>=0.3.3
+python-dotenv>=1.0.0
+pandas>=2.0.0
+streamlit>=1.30.0
+pytest>=7.4.0

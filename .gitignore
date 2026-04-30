@@ -1,0 +1,25 @@
+# Secrets — never commit
+.env
+
+# Output reports
+data/qualified/*
+!data/qualified/.gitkeep
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+.pytest_cache/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Editors
+.vscode/
+.idea/
+
+# Codex local files
+.codex/
