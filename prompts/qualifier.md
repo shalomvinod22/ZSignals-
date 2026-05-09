@@ -14,34 +14,38 @@ Analyze the post and return ONLY a valid JSON object — no markdown, no preambl
 
 ```json
 {
-  "disqualified": false,
-  "disqualifier_reason": null,
-  "intent_score": 5,
-  "specificity": "SPECIFIC",
-  "pain_category": "Bounce Rate / Deliverability",
-  "pain_in_words": "This person is frustrated because...",
-  "buyer_type": "SDR/BDR",
-  "identity": {
-    "name": null,
-    "company": "PaySync",
-    "role": "SDR",
-    "location": "Bangalore",
-    "industry": "Fintech",
-    "linkedin_url": null,
-    "twitter_handle": null,
-    "email": null,
-    "username": "u/sdr_burnedout",
-    "platform": "Reddit"
+  "score": 5,
+  "tier": "HIGH",
+  "is_disqualified": false,
+  "pain_stage": "Evaluation",
+  "pain_type": "Bounce Rate / Deliverability",
+  "pain_evidence": "42% bounce rate mentioned",
+  "persona": {
+    "inferred_role": "SDR/BDR",
+    "decision_authority": "Individual Contributor",
+    "geography": "India"
   },
-  "company_context": {
-    "size": "Startup",
-    "geography": "India",
-    "stage": "Hiring/scaling"
+  "signal_stack": {
+    "fit": "SaaS startup in India",
+    "opportunity": "Actively seeking alternatives",
+    "intent": "High - specific numbers and comparison shopping"
   },
-  "why_matters": "Active comparison shopper, named our two strongest wedges in one post...",
-  "recommended_action": "AE WHITE GLOVE",
-  "opening_line": "saw your note about 40% bouncing on india contacts — apollo's APAC accuracy is a documented hole, you're not imagining it",
-  "confidence": "HIGH"
+  "conversation_kit": {
+    "cold_opener_email": "saw your 42% bounce rate in Mumbai/Bangalore — Apollo's APAC accuracy is documented at ~73%",
+    "linkedin_dm": "Hey, saw your post about Apollo bounces in India. We're seeing the same gap — what's your current bounce rate?",
+    "talking_points": ["Apollo APAC accuracy gap", "Zintlr 98% India accuracy", "Integrated AI insights"]
+  },
+  "likely_objections": [
+    {"objection": "Cost too high", "response": "ROI from 98% accuracy vs 73% bounce reduction pays for itself in first month"},
+    {"objection": "Not sure about India focus", "response": "We have director-level data on every GoI-registered company"}
+  ],
+  "outbound_strategy": {
+    "primary_channel": "Email sequence",
+    "expected_response_rate": "15-20%",
+    "follow_up_timeline": "3-5 days"
+  },
+  "reasoning": "Specific bounce numbers, named Apollo, actively seeking alternatives, India focus matches Zintlr strength",
+  "ae_priority": "High - ready buyer"
 }
 ```
 
@@ -62,35 +66,52 @@ When in doubt → disqualify.
 
 # Field rules
 
-**intent_score** (1–5):
+**score** (1–5):
 - 1 = no buying intent
 - 2 = low (mild discussion)
 - 3 = moderate (problem mentioned, not urgent)
 - 4 = high (clear frustration, named tool)
 - 5 = very high (actively asking for alternatives or naming Zintlr's exact wedge)
 
-**specificity**: `"VAGUE"` or `"SPECIFIC"`. SPECIFIC if numbers, dates, named accounts, regions, or use cases.
+**tier**: `"HIGH"`, `"MEDIUM"`, `"LOW"` based on score (5=HIGH, 4=MEDIUM, 3-1=LOW)
 
-**pain_category** (pick ONE): `"Bounce Rate / Deliverability"` | `"Inaccurate Data / Wrong Contacts"` | `"Poor India / APAC Coverage"` | `"Pricing / Cost"` | `"Bad UX / Workflow Friction"` | `"Comparison Shopping"` | `"General Frustration"` | `"Other"`
+**is_disqualified**: true if disqualifier applies, else false
 
-**buyer_type** (pick ONE): `"SDR/BDR"` | `"Sales Manager"` | `"Head of Sales / VP Sales"` | `"CRO"` | `"Founder"` | `"RevOps"` | `"Marketing / Growth"` | `"Unknown"`
+**pain_stage**: `"Awareness"`, `"Evaluation"`, `"Decision"`, `"Urgent"`, or `"Postponed"`.
 
-**identity fields**: ONLY fill if explicitly stated/visible. Use `null` when not 95% certain. NEVER hallucinate.
+**pain_type** (pick ONE): `"Bounce Rate / Deliverability"` | `"Inaccurate Data / Wrong Contacts"` | `"Poor India / APAC Coverage"` | `"Pricing / Cost"` | `"Bad UX / Workflow Friction"` | `"Comparison Shopping"` | `"General Frustration"` | `"Other"`
 
-**company_context.size**: `"Startup"` | `"SMB"` | `"Mid-market"` | `"Enterprise"` | `"Unknown"`
-**company_context.geography**: `"India"` | `"APAC"` | `"US/EU"` | `"Global"` | `"Unknown"`
-**company_context.stage**: `"Hiring/scaling"` | `"Stable"` | `"Struggling"` | `"Unknown"`
+**pain_evidence**: Specific quote or detail from post proving the pain
 
-**recommended_action** (DETERMINISTIC):
-| score | identity has company OR email OR linkedin? | action |
-|-------|---|---|
-| 5 | Yes | `"BOTH"` |
-| 5 | No | `"AE WHITE GLOVE"` |
-| 4 | Yes | `"BULK EMAIL"` |
-| 4 | No | `"AE WHITE GLOVE (lower priority)"` |
-| 3 | Yes | `"BULK EMAIL"` |
-| 3 | No | `"DROP"` |
-| 1–2 | Any | `"IGNORE"` |
+**persona.inferred_role** (pick ONE): `"SDR/BDR"` | `"Sales Manager"` | `"Head of Sales / VP Sales"` | `"CRO"` | `"Founder"` | `"RevOps"` | `"Marketing / Growth"` | `"Unknown"`
+
+**persona.decision_authority**: `"Individual Contributor"`, `"Manager"`, `"Director"`, `"VP/C-Level"`, `"Founder"`
+
+**persona.geography**: `"India"`, `"APAC"`, `"US/EU"`, `"Global"`, `"Unknown"`
+
+**signal_stack.fit**: How well the prospect matches Zintlr's strengths (India/APAC focus, accuracy)
+
+**signal_stack.opportunity**: Size of the opportunity (company size, pain urgency)
+
+**signal_stack.intent**: Level of buying intent based on post content
+
+**conversation_kit.cold_opener_email**: Email opener, max 25 words, reference specific detail, no pitch
+
+**conversation_kit.linkedin_dm**: LinkedIn DM opener, conversational
+
+**conversation_kit.talking_points**: Array of 3-5 key points to discuss
+
+**likely_objections**: Array of 2-3 common objections with responses
+
+**outbound_strategy.primary_channel**: `"Email sequence"`, `"LinkedIn DM"`, `"Cold call"`, `"Multi-channel"`
+
+**outbound_strategy.expected_response_rate**: Estimated % like "15-20%"
+
+**outbound_strategy.follow_up_timeline**: Suggested timeline like "3-5 days"
+
+**reasoning**: 1-2 sentence explanation of why this is a good lead
+
+**ae_priority**: `"High - ready buyer"`, `"Medium - nurture"`, `"Low - monitor"`
 
 **opening_line** rules (only if score ≥ 3, else `null`):
 - Max 25 words
@@ -118,34 +139,38 @@ Anyone else getting destroyed by Apollo's India data lately? Sent 200 emails thi
 Output:
 ```json
 {
-  "disqualified": false,
-  "disqualifier_reason": null,
-  "intent_score": 5,
-  "specificity": "SPECIFIC",
-  "pain_category": "Bounce Rate / Deliverability",
-  "pain_in_words": "This person is frustrated because 42% of their Apollo emails to India bounced this week, and they're now actively looking for an APAC-capable alternative.",
-  "buyer_type": "SDR/BDR",
-  "identity": {
-    "name": null,
-    "company": null,
-    "role": "SDR",
-    "location": "HSR Layout, Bangalore",
-    "industry": "SaaS (Series A)",
-    "linkedin_url": null,
-    "twitter_handle": null,
-    "email": null,
-    "username": "u/sdr_burnedout_blr",
-    "platform": "Reddit"
+  "score": 5,
+  "tier": "HIGH",
+  "is_disqualified": false,
+  "pain_stage": "Evaluation",
+  "pain_type": "Bounce Rate / Deliverability",
+  "pain_evidence": "42% bounce rate on 200 emails to Mumbai/Bangalore",
+  "persona": {
+    "inferred_role": "SDR/BDR",
+    "decision_authority": "Individual Contributor",
+    "geography": "India"
   },
-  "company_context": {
-    "size": "Startup",
-    "geography": "India",
-    "stage": "Hiring/scaling"
+  "signal_stack": {
+    "fit": "India-focused SaaS startup needing accurate APAC contacts",
+    "opportunity": "Series A company actively scaling outbound",
+    "intent": "High - specific metrics and seeking alternatives"
   },
-  "why_matters": "Active comparison shopper who named both our strongest wedges (Apollo + India APAC accuracy). Specific bounce numbers prove they track ROI. Likely 2 weeks from buying something.",
-  "recommended_action": "AE WHITE GLOVE",
-  "opening_line": "saw your note about 42% bouncing in mumbai/bangalore — apollo's APAC accuracy sits around 73% which is exactly the gap you're seeing",
-  "confidence": "HIGH"
+  "conversation_kit": {
+    "cold_opener_email": "saw your 42% bounce rate in mumbai/bangalore — apollo's APAC accuracy is documented at ~73%",
+    "linkedin_dm": "Hey, saw your post about Apollo bounces in India. We're seeing the same gap — what's your current bounce rate?",
+    "talking_points": ["Apollo APAC accuracy gap", "Zintlr 98% India accuracy", "Integrated AI insights"]
+  },
+  "likely_objections": [
+    {"objection": "Cost too high", "response": "ROI from 98% accuracy vs 73% bounce reduction pays for itself in first month"},
+    {"objection": "Not sure about India focus", "response": "We have director-level data on every GoI-registered company"}
+  ],
+  "outbound_strategy": {
+    "primary_channel": "Email sequence",
+    "expected_response_rate": "15-20%",
+    "follow_up_timeline": "3-5 days"
+  },
+  "reasoning": "Specific bounce numbers prove ROI tracking, named Apollo weakness, actively seeking APAC alternatives, India geography matches Zintlr strength",
+  "ae_priority": "High - ready buyer"
 }
 ```
 
@@ -164,23 +189,35 @@ Apollo has its issues but honestly any data tool is going to have some bounce. J
 Output:
 ```json
 {
-  "disqualified": true,
-  "disqualifier_reason": "Defensive of Apollo with no buying intent",
-  "intent_score": 0,
-  "specificity": null,
-  "pain_category": null,
-  "pain_in_words": null,
-  "buyer_type": null,
-  "identity": {
-    "name": null, "company": null, "role": null, "location": null,
-    "industry": null, "linkedin_url": null, "twitter_handle": null,
-    "email": null, "username": "u/saas_sales_2015", "platform": "Reddit"
+  "score": 0,
+  "tier": "LOW",
+  "is_disqualified": true,
+  "pain_stage": null,
+  "pain_type": null,
+  "pain_evidence": null,
+  "persona": {
+    "inferred_role": "Unknown",
+    "decision_authority": "Unknown",
+    "geography": "Unknown"
   },
-  "company_context": {"size": "Unknown", "geography": "Unknown", "stage": "Unknown"},
-  "why_matters": null,
-  "recommended_action": "IGNORE",
-  "opening_line": null,
-  "confidence": "HIGH"
+  "signal_stack": {
+    "fit": null,
+    "opportunity": null,
+    "intent": null
+  },
+  "conversation_kit": {
+    "cold_opener_email": null,
+    "linkedin_dm": null,
+    "talking_points": null
+  },
+  "likely_objections": null,
+  "outbound_strategy": {
+    "primary_channel": null,
+    "expected_response_rate": null,
+    "follow_up_timeline": null
+  },
+  "reasoning": "Defensive of Apollo, no buying intent, dismissive tone",
+  "ae_priority": "Low - monitor"
 }
 ```
 

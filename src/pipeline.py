@@ -26,7 +26,7 @@ def run_pipeline(
     input_csv: Path,
     output_dir: Path,
     prompt_path: Path,
-    progress_callback: Callable[[int, int, str], None] | None = None,
+    progress_callback: Callable[..., None] | None = None,
 ) -> tuple[Path, Path, list[dict[str, Any]]]:
     """Run full pipeline. Returns (md_path, csv_path, results)."""
     llm = get_llm()

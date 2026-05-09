@@ -30,15 +30,29 @@ def test_qualifier_parses_clean_json() -> None:
     canned = json.dumps({
         "disqualified": False,
         "intent_score": 5,
+        "specificity": "SPECIFIC",
         "pain_category": "Bounce Rate / Deliverability",
+        "pain_stage": "Evaluation",
+        "pain_in_words": "Apollo data is failing in India.",
+        "buyer_type": "SDR/BDR",
+        "company_context": {
+            "size": "Startup",
+            "geography": "India",
+            "stage": "Hiring/scaling",
+        },
+        "conversation_kit": "EMAIL_SEQUENCE",
         "recommended_action": "BOTH",
+        "opening_line": "saw your note about apollo",
         "confidence": "HIGH",
     })
     q = Qualifier(PROMPT_PATH, FakeLLM(canned))
     result = q.analyze({"platform": "Reddit", "content": "test"})
-    assert result["intent_score"] == 5
-    assert result["recommended_action"] == "BOTH"
-    assert result["_post"]["platform"] == "Reddit"
+    # _normalize() maps old keys to new V1.3 schema
+    assert result["score"] == 5  # intent_score -> score
+    assert result["pain_stage"] == "Evaluation"
+    assert result["pain_type"] == "Bounce Rate / Deliverability"  # pain_category -> pain_type
+    assert result["ae_priority"] == "BOTH"  # recommended_action -> ae_priority
+    assert result["persona"]["inferred_role"] == "SDR/BDR"  # buyer_type -> persona.inferred_role
 
 
 def test_qualifier_handles_messy_json_with_prose() -> None:
@@ -50,7 +64,9 @@ def test_qualifier_handles_messy_json_with_prose() -> None:
     )
     q = Qualifier(PROMPT_PATH, FakeLLM(canned))
     result = q.analyze({"platform": "G2", "content": "x"})
-    assert result["intent_score"] == 4
+    # intent_score -> score (V1.3 mapping)
+    assert result["score"] == 4
+    assert result["ae_priority"] == "BULK EMAIL"  # recommended_action -> ae_priority
 
 
 def test_qualifier_handles_unparseable_response() -> None:

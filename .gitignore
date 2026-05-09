@@ -23,3 +23,9 @@ Thumbs.db
 
 # Codex local files
 .codex/
+
+# Database and scraper cache
+data/seen_posts.db
+data/seen_posts.db-journal
+data/scrape_cache/
+.streamlit/secrets.toml

@@ -76,3 +76,71 @@ cp .env.example .env
 - Not customer-facing — internal Zintlr tool only
 - Not an outreach sender — produces lists, humans send messages
 - Not a CRM — outputs CSV; humans import to HubSpot/Sheets
+
+---
+
+## V1.2 — Zintlr Pulse
+
+**What's new**: Production-grade auto-scraping with modern dark-mode UI for BDR/AE team.
+
+### New modules
+
+#### Scraper layer (`src/scraper/`)
+- `reddit_scraper.py` — public JSON endpoint scraper (no API key required)
+- `g2_scraper.py` — G2 reviews via BeautifulSoup4
+- `hackernews_scraper.py` — Algolia HN Search API
+- `orchestrator.py` — combines all scrapers with graceful failure handling
+
+#### Database layer (`src/db.py`)
+- SQLite-based state tracking: seen posts, lead status, qualifier cache, scrape history
+- `PulseDB` class with transactional writes
+- Connection uses `check_same_thread=False` for Streamlit safety
+- Tables: `seen_posts`, `lead_status`, `qualifier_cache`, `scrape_history`, `user_config`
+
+#### Classification & pipeline
+- `src/signal_classifier.py` — lightweight regex-based signal detection (complaint, hiring, comparison_shopping, etc.)
+- `src/demo_data.py` — 12 curated example posts for testing/demos
+- `src/pulse_pipeline.py` — orchestrates scraping + classification + qualification + caching
+
+#### UI (`app.py`)
+- Replaced entirely with dark-mode Streamlit UI (Linear/Vercel aesthetic)
+- Primary/accent colors: indigo + cyan from Zintlr logo
+- Hero stat bar, scrape control panel, results tabs, lead cards with actions
+- Settings & diagnostics tab
+
+### New env vars
+- `APIFY_API_TOKEN` — fallback scraper (optional)
+- `REDDIT_CLIENT_ID`, `REDDIT_CLIENT_SECRET`, `REDDIT_USER_AGENT` — PRAW config (optional)
+
+### Database file
+- Location: `data/seen_posts.db` (gitignored)
+- Auto-created on first run via `PulseDB()`
+
+### New tests
+- `tests/test_db.py` — PulseDB table creation, dedup, cache, status tracking
+- `tests/test_signal_classifier.py` — signal detection patterns
+- `tests/test_orchestrator.py` — multi-source scraping, partial failures, dedup
+- `tests/test_pulse_pipeline.py` — caching, bucketing, demo mode
+- `tests/test_demo_data.py` — demo post schema validation
+
+### Common commands (V1.2)
+| Task | Command |
+|------|---------|
+| Run UI | `streamlit run app.py` |
+| Run tests | `pytest tests/ -v` |
+| Reset dedup | `python -c "from src.db import PulseDB; PulseDB().reset_seen_posts()"` |
+| Test scrapers | `pytest tests/test_orchestrator.py -v` |
+
+### Hard rules — V1.2 specific
+- **Scrapers must isolate failures** — one source down ≠ entire scrape fails
+- **Tests must never make real network calls** — all mocked/patched
+- **Database writes wrapped in transactions** — no corrupted half-writes
+- **Qualifier prompt locked** — don't modify `prompts/qualifier.md` (V1 compatibility)
+- **UI respects dark aesthetic** — no light mode, no contrast violations
+- **Logo optional** — if `data/assets/zintlr_logo_main.png` missing, UI still works
+
+### What changed from V1
+- V1: CSV upload → analyze → export
+- V1.2: Auto-scrape daily → deduplicate → cache → qualify → live dashboard
+- V1 CSV upload mode still available in app.py as fallback (not yet removed)
+- Database tracks lead status and scrape history
